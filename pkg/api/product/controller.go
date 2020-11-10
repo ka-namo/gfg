@@ -1,30 +1,32 @@
 package product
 
 import (
-	"coding-challenge-go/pkg/api/seller"
-	"encoding/json"
+	sellerAPI "coding-challenge-go/pkg/api/seller"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"net/http"
 )
 
 const (
 	LIST_PAGE_SIZE = 10
+	versionV1      = "v1"
+	versionV2      = "v2"
 )
 
-func NewController(repository *repository, sellerRepository *seller.Repository, sellerEmailProvider *seller.EmailProvider) *controller {
+func NewController(repository *repository, sellerRepository *sellerAPI.Repository, sellerEmailProvider *sellerAPI.EmailProvider) *controller {
 	return &controller{
-		repository: repository,
-		sellerRepository: sellerRepository,
+		repository:          repository,
+		sellerRepository:    sellerRepository,
 		sellerEmailProvider: sellerEmailProvider,
 	}
 }
 
 type controller struct {
-	repository *repository
-	sellerRepository *seller.Repository
-	sellerEmailProvider *seller.EmailProvider
+	repository          *repository
+	sellerRepository    *sellerAPI.Repository
+	sellerEmailProvider *sellerAPI.EmailProvider
 }
 
 func (pc *controller) List(c *gin.Context) {
@@ -37,7 +39,7 @@ func (pc *controller) List(c *gin.Context) {
 		return
 	}
 
-	products, err  := pc.repository.list((request.Page - 1) * LIST_PAGE_SIZE, LIST_PAGE_SIZE)
+	products, err := pc.repository.list((request.Page-1)*LIST_PAGE_SIZE, LIST_PAGE_SIZE)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to query product list")
@@ -45,8 +47,7 @@ func (pc *controller) List(c *gin.Context) {
 		return
 	}
 
-	productsJson, err := json.Marshal(products)
-
+	productsJson, err := marshalJSON(c, products)
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to marshal products")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fail to marshal products"})
@@ -74,22 +75,22 @@ func (pc *controller) Get(c *gin.Context) {
 		return
 	}
 
-	productJson, err := json.Marshal(product)
-
+	jsonData, err := marshalJSON(c, product)
 	if err != nil {
+		log.Print(err)
 		log.Error().Err(err).Msg("Fail to marshal product")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fail to marshal product"})
 		return
 	}
 
-	c.Data(http.StatusOK, "application/json; charset=utf-8", productJson)
+	c.Data(http.StatusOK, "application/json; charset=utf-8", jsonData)
 }
 
 func (pc *controller) Post(c *gin.Context) {
 	request := &struct {
-		Name string `form:"name"`
-		Brand string `form:"brand"`
-		Stock int `form:"stock"`
+		Name   string `form:"name"`
+		Brand  string `form:"brand"`
+		Stock  int    `form:"stock"`
 		Seller string `form:"seller"`
 	}{}
 
@@ -112,11 +113,11 @@ func (pc *controller) Post(c *gin.Context) {
 	}
 
 	product := &product{
-		UUID:      uuid.New().String(),
-		Name:      request.Name,
-		Brand:     request.Brand,
-		Stock:     request.Stock,
-		SellerUUID:    seller.UUID,
+		UUID:       uuid.New().String(),
+		Name:       request.Name,
+		Brand:      request.Brand,
+		Stock:      request.Stock,
+		SellerUUID: seller.UUID,
 	}
 
 	err = pc.repository.insert(product)
@@ -127,7 +128,7 @@ func (pc *controller) Post(c *gin.Context) {
 		return
 	}
 
-	jsonData, err := json.Marshal(product)
+	jsonData, err := marshalJSON(c, product)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to marshal product")
@@ -157,9 +158,9 @@ func (pc *controller) Put(c *gin.Context) {
 	}
 
 	request := &struct {
-		Name string `form:"name"`
+		Name  string `form:"name"`
 		Brand string `form:"brand"`
-		Stock int `form:"stock"`
+		Stock int    `form:"stock"`
 	}{}
 
 	if err := c.ShouldBindJSON(request); err != nil {
@@ -193,7 +194,7 @@ func (pc *controller) Put(c *gin.Context) {
 		pc.sellerEmailProvider.StockChanged(oldStock, product.Stock, seller.Email)
 	}
 
-	jsonData, err := json.Marshal(product)
+	jsonData, err := marshalJSON(c, product)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to marshal product")
