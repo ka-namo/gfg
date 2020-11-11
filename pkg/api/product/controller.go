@@ -20,25 +20,57 @@ type SellerFinder interface {
 	FindByUUID(uuid string) (*sellerAPI.Seller, error)
 }
 
+type FinderByUUID interface {
+	findByUUID(uuid string) (*product, error)
+}
+
+type ManyFinder interface {
+	list(offset int, limit int) ([]*product, error)
+}
+
+type Updater interface {
+	update(product *product) error
+}
+
+type Inserter interface {
+	insert(product *product) error
+}
+
+type Deleter interface {
+	delete(product *product) error
+}
+
+type controller struct {
+	deleter          Deleter
+	updater          Updater
+	inserter         Inserter
+	finderByUUID     FinderByUUID
+	finder           ManyFinder
+	sellerRepository SellerFinder
+	emailProvider    StockChangedNotifier
+	smsProvider      StockChangedNotifier
+}
+
 func NewController(
-	repository *repository,
+	deleter Deleter,
+	updater Updater,
+	inserter Inserter,
+	finderByUUID FinderByUUID,
+	finder ManyFinder,
 	sellerRepository SellerFinder,
 	emailProvider StockChangedNotifier,
 	smsProvider StockChangedNotifier,
 ) *controller {
 	return &controller{
-		repository:       repository,
+		deleter:          deleter,
+		updater:          updater,
+		inserter:         inserter,
+		finderByUUID:     finderByUUID,
+		finder:           finder,
 		sellerRepository: sellerRepository,
 		emailProvider:    emailProvider,
 		smsProvider:      smsProvider,
 	}
-}
-
-type controller struct {
-	repository       *repository
-	sellerRepository SellerFinder
-	emailProvider    StockChangedNotifier
-	smsProvider      StockChangedNotifier
 }
 
 func (pc *controller) List(c *gin.Context) {
@@ -51,7 +83,7 @@ func (pc *controller) List(c *gin.Context) {
 		return
 	}
 
-	products, err := pc.repository.list((request.Page-1)*ListPageSize, ListPageSize)
+	products, err := pc.finder.list((request.Page-1)*ListPageSize, ListPageSize)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to query product list")
@@ -79,7 +111,7 @@ func (pc *controller) Get(c *gin.Context) {
 		return
 	}
 
-	product, err := pc.repository.findByUUID(request.UUID)
+	product, err := pc.finderByUUID.findByUUID(request.UUID)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to query product by uuid")
@@ -132,7 +164,7 @@ func (pc *controller) Post(c *gin.Context) {
 		SellerUUID: seller.UUID,
 	}
 
-	err = pc.repository.insert(product)
+	err = pc.inserter.insert(product)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to insert product")
@@ -161,7 +193,7 @@ func (pc *controller) Put(c *gin.Context) {
 		return
 	}
 
-	product, err := pc.repository.findByUUID(queryRequest.UUID)
+	product, err := pc.finderByUUID.findByUUID(queryRequest.UUID)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to query product by uuid")
@@ -186,7 +218,7 @@ func (pc *controller) Put(c *gin.Context) {
 	product.Brand = request.Brand
 	product.Stock = request.Stock
 
-	err = pc.repository.update(product)
+	err = pc.updater.update(product)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to insert product")
@@ -233,7 +265,7 @@ func (pc *controller) Delete(c *gin.Context) {
 		return
 	}
 
-	product, err := pc.repository.findByUUID(request.UUID)
+	product, err := pc.finderByUUID.findByUUID(request.UUID)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to query product by uuid")
@@ -246,7 +278,7 @@ func (pc *controller) Delete(c *gin.Context) {
 		return
 	}
 
-	err = pc.repository.delete(product)
+	err = pc.deleter.delete(product)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to delete product")

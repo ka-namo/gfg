@@ -8,6 +8,18 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type FinderByUUID interface {
+	FindByUUID(uuid string) (*Seller, error)
+}
+
+type ManyFinder interface {
+	list() ([]*Seller, error)
+}
+
+type TopSellerFinder interface {
+	top(limit int) ([]*Seller, error)
+}
+
 func NewController(repository *Repository) *controller {
 	return &controller{
 		repository: repository,

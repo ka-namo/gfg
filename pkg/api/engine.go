@@ -34,7 +34,16 @@ func CreateAPIEngine(db *sql.DB, cfg config.ENVConfig) (*gin.Engine, error) {
 		emailProvider = seller.NewEmailProvider()
 	}
 
-	productController := product.NewController(productRepository, sellerRepository, emailProvider, smsProvider)
+	productController := product.NewController(
+		productRepository,
+		productRepository,
+		productRepository,
+		productRepository,
+		productRepository,
+		sellerRepository,
+		emailProvider,
+		smsProvider,
+	)
 
 	v1.GET("products", productController.List)
 	v1.GET("product", productController.Get)
