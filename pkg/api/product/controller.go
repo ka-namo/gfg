@@ -11,14 +11,18 @@ import (
 )
 
 const (
-	LIST_PAGE_SIZE = 10
-	versionV1      = "v1"
-	versionV2      = "v2"
+	ListPageSize = 10
+	versionV1    = "v1"
+	versionV2    = "v2"
 )
+
+type SellerFinder interface {
+	FindByUUID(uuid string) (*sellerAPI.Seller, error)
+}
 
 func NewController(
 	repository *repository,
-	sellerRepository *sellerAPI.Repository,
+	sellerRepository SellerFinder,
 	emailProvider StockChangedNotifier,
 	smsProvider StockChangedNotifier,
 ) *controller {
@@ -32,7 +36,7 @@ func NewController(
 
 type controller struct {
 	repository       *repository
-	sellerRepository *sellerAPI.Repository
+	sellerRepository SellerFinder
 	emailProvider    StockChangedNotifier
 	smsProvider      StockChangedNotifier
 }
@@ -47,7 +51,7 @@ func (pc *controller) List(c *gin.Context) {
 		return
 	}
 
-	products, err := pc.repository.list((request.Page-1)*LIST_PAGE_SIZE, LIST_PAGE_SIZE)
+	products, err := pc.repository.list((request.Page-1)*ListPageSize, ListPageSize)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to query product list")
