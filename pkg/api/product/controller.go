@@ -1,8 +1,9 @@
 package product
 
 import (
-	sellerAPI "coding-challenge-go/pkg/api/seller"
 	"net/http"
+
+	sellerAPI "coding-challenge-go/pkg/api/seller"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -15,18 +16,25 @@ const (
 	versionV2      = "v2"
 )
 
-func NewController(repository *repository, sellerRepository *sellerAPI.Repository, sellerEmailProvider *sellerAPI.EmailProvider) *controller {
+func NewController(
+	repository *repository,
+	sellerRepository *sellerAPI.Repository,
+	emailProvider StockChangedNotifier,
+	smsProvider StockChangedNotifier,
+) *controller {
 	return &controller{
-		repository:          repository,
-		sellerRepository:    sellerRepository,
-		sellerEmailProvider: sellerEmailProvider,
+		repository:       repository,
+		sellerRepository: sellerRepository,
+		emailProvider:    emailProvider,
+		smsProvider:      smsProvider,
 	}
 }
 
 type controller struct {
-	repository          *repository
-	sellerRepository    *sellerAPI.Repository
-	sellerEmailProvider *sellerAPI.EmailProvider
+	repository       *repository
+	sellerRepository *sellerAPI.Repository
+	emailProvider    StockChangedNotifier
+	smsProvider      StockChangedNotifier
 }
 
 func (pc *controller) List(c *gin.Context) {
@@ -191,7 +199,13 @@ func (pc *controller) Put(c *gin.Context) {
 			return
 		}
 
-		pc.sellerEmailProvider.StockChanged(oldStock, product.Stock, seller.Email)
+		if pc.emailProvider != nil {
+			pc.emailProvider.StockChanged(seller.UUID, seller.Email, oldStock, product.Stock, product.Name)
+		}
+
+		if pc.smsProvider != nil {
+			pc.smsProvider.StockChanged(seller.UUID, seller.Phone, oldStock, product.Stock, product.Name)
+		}
 	}
 
 	jsonData, err := marshalJSON(c, product)

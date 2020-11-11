@@ -5,6 +5,8 @@ import (
 	"coding-challenge-go/pkg/api/product"
 	"coding-challenge-go/pkg/api/seller"
 	"database/sql"
+	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,8 +23,18 @@ func CreateAPIEngine(db *sql.DB) (*gin.Engine, error) {
 
 	productRepository := product.NewRepository(db)
 	sellerRepository := seller.NewRepository(db)
-	emailProvider := seller.NewEmailProvider()
-	productController := product.NewController(productRepository, sellerRepository, emailProvider)
+
+	var emailProvider, smsProvider product.StockChangedNotifier
+
+	if strings.ToLower(os.Getenv("NOTIFY_SMS")) == "true" {
+		smsProvider = seller.NewSMSProvider()
+	}
+
+	if strings.ToLower(os.Getenv("NOTIFY_EMAIL")) == "true" {
+		emailProvider = seller.NewEmailProvider()
+	}
+
+	productController := product.NewController(productRepository, sellerRepository, emailProvider, smsProvider)
 
 	v1.GET("products", productController.List)
 	v1.GET("product", productController.Get)

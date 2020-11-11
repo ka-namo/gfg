@@ -40,7 +40,7 @@ func hydrateProductsToV2(c *gin.Context, products interface{}) interface{} {
 		}
 
 		return productsV2
-	case product:
+	case *product:
 		return productV2{
 			UUID:  v.UUID,
 			Name:  v.Name,
