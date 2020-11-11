@@ -49,6 +49,7 @@ func CreateAPIEngine(db *sql.DB) (*gin.Engine, error) {
 	v2.POST("product", productController.Post)
 	v2.PUT("product", productController.Put)
 	v2.DELETE("product", productController.Delete)
+	v2.GET("sellers/top10", sellerController.Top10)
 
 	return r, nil
 }
