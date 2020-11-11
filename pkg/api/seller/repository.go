@@ -63,6 +63,8 @@ func (r *Repository) list() ([]*Seller, error) {
 	return sellers, nil
 }
 
+// top returns the Sellers who are selling products ordered by count of products
+// they have for sale from the largest to the smallest number limited by given limit.
 func (r *Repository) top(limit int) ([]*Seller, error) {
 	query := "SELECT id_seller, name, email, phone, uuid FROM seller" +
 		" WHERE id_seller IN (SELECT fk_seller FROM product GROUP BY fk_seller ORDER BY COUNT(*) DESC)" +

@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// marshalJSON marshals products as per the API version.
+// this layer represents views, which differs for different version.
 func marshalJSON(c *gin.Context, products interface{}) ([]byte, error) {
 	switch c.MustGet("version").(string) {
 	case versionV1:
@@ -19,6 +21,7 @@ func marshalJSON(c *gin.Context, products interface{}) ([]byte, error) {
 	return nil, errors.New("invalid API version")
 }
 
+// hydrateProductsToV2 transforms product/products to its version V2.
 func hydrateProductsToV2(c *gin.Context, products interface{}) interface{} {
 	switch v := products.(type) {
 	case []*product:

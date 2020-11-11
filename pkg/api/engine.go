@@ -1,19 +1,19 @@
 package api
 
 import (
+	"database/sql"
+
 	"coding-challenge-go/pkg/api/middleware"
 	"coding-challenge-go/pkg/api/product"
 	"coding-challenge-go/pkg/api/seller"
-	"database/sql"
-	"os"
-	"strings"
+	"coding-challenge-go/pkg/config"
 
 	"github.com/gin-gonic/gin"
 )
 
 // CreateAPIEngine creates engine instance that serves API endpoints,
 // consider it as a router for incoming requests.
-func CreateAPIEngine(db *sql.DB) (*gin.Engine, error) {
+func CreateAPIEngine(db *sql.DB, cfg config.ENVConfig) (*gin.Engine, error) {
 	r := gin.New()
 
 	r.Use(middleware.APIVersionResolver)
@@ -26,11 +26,11 @@ func CreateAPIEngine(db *sql.DB) (*gin.Engine, error) {
 
 	var emailProvider, smsProvider product.StockChangedNotifier
 
-	if strings.ToLower(os.Getenv("NOTIFY_SMS")) == "true" {
+	if cfg.NotifySMS {
 		smsProvider = seller.NewSMSProvider()
 	}
 
-	if strings.ToLower(os.Getenv("NOTIFY_EMAIL")) == "true" {
+	if cfg.NotifyEmail {
 		emailProvider = seller.NewEmailProvider()
 	}
 
@@ -44,6 +44,11 @@ func CreateAPIEngine(db *sql.DB) (*gin.Engine, error) {
 	sellerController := seller.NewController(sellerRepository)
 	v1.GET("sellers", sellerController.List)
 
+	// The decision of having same Controller and having different view as per
+	// different API version is - as this is the minimal change and easy to maintain
+	// and very less duplication. Having Different controllers could be useful, if
+	// we have major changes and previous versions are going to be removed in short time,
+	// but this is not clear from the requirement, so I am assuming we will maintain 2 versions.
 	v2.GET("products", productController.List)
 	v2.GET("product", productController.Get)
 	v2.POST("product", productController.Post)

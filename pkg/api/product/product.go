@@ -9,6 +9,7 @@ type product struct {
 	SellerUUID string `json:"seller_uuid"`
 }
 
+// productV2 is the v2 representation of product
 type productV2 struct {
 	ProductID int    `json:"-"`
 	UUID      string `json:"uuid"`
@@ -18,6 +19,7 @@ type productV2 struct {
 	Seller    seller `json:"seller"`
 }
 
+// seller represents seller used by productV2
 type seller struct {
 	UUID  string `json:"uuid"`
 	Links links  `json:"_links"`
