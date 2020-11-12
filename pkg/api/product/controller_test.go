@@ -687,3 +687,164 @@ func Test_controller_Update(t *testing.T) {
 		})
 	}
 }
+
+func Test_controller_Delete(t *testing.T) {
+	type fields struct {
+		deleter          Deleter
+		updater          Updater
+		inserter         Inserter
+		finderByUUID     FinderByUUID
+		finder           ManyFinder
+		sellerRepository SellerFinder
+		emailProvider    StockChangedNotifier
+		smsProvider      StockChangedNotifier
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		body      string
+		expStatus int
+		path      string
+		expBody   string
+	}{
+		{
+			name: "v2: Delete Product returns 200OK",
+			fields: fields{
+				finderByUUID: func() FinderByUUID {
+					m := new(FinderByUUIDMock)
+					p := &product{
+						ProductID:  1,
+						Name:       "shoes",
+						UUID:       "61981e52-e1ca-449e-b79f-01d5906b3435",
+						Brand:      "nike",
+						Stock:      10,
+						SellerUUID: "a223850e-d8ab-430a-9a1a-28628cfd52b0",
+					}
+					m.On("findByUUID", "61981e52-e1ca-449e-b79f-01d5906b3435").Return(p, nil)
+					return m
+				}(),
+				deleter: func() Deleter {
+					m := new(DeleterMock)
+					p := &product{
+						ProductID:  1,
+						Name:       "shoes",
+						UUID:       "61981e52-e1ca-449e-b79f-01d5906b3435",
+						Brand:      "nike",
+						Stock:      10,
+						SellerUUID: "a223850e-d8ab-430a-9a1a-28628cfd52b0",
+					}
+					m.On("delete", p).Return(nil)
+					return m
+				}(),
+			},
+			expStatus: http.StatusOK,
+			path:      "/api/v2/product?id=61981e52-e1ca-449e-b79f-01d5906b3435",
+			expBody:   `{}`,
+		},
+		{
+			name: "v2: fail to delete, returns 500",
+			fields: fields{
+				finderByUUID: func() FinderByUUID {
+					m := new(FinderByUUIDMock)
+					p := &product{
+						ProductID:  1,
+						Name:       "shoes",
+						UUID:       "61981e52-e1ca-449e-b79f-01d5906b3435",
+						Brand:      "nike",
+						Stock:      10,
+						SellerUUID: "a223850e-d8ab-430a-9a1a-28628cfd52b0",
+					}
+					m.On("findByUUID", "61981e52-e1ca-449e-b79f-01d5906b3435").Return(p, nil)
+					return m
+				}(),
+				deleter: func() Deleter {
+					m := new(DeleterMock)
+					p := &product{
+						ProductID:  1,
+						Name:       "shoes",
+						UUID:       "61981e52-e1ca-449e-b79f-01d5906b3435",
+						Brand:      "nike",
+						Stock:      10,
+						SellerUUID: "a223850e-d8ab-430a-9a1a-28628cfd52b0",
+					}
+					m.On("delete", p).Return(errors.New("any error"))
+					return m
+				}(),
+			},
+			expStatus: http.StatusInternalServerError,
+			path:      "/api/v2/product?id=61981e52-e1ca-449e-b79f-01d5906b3435",
+			expBody:   `{"error":"Fail to delete product"}`,
+		},
+
+		{
+			name: "v2: Product not found returns 400",
+			fields: fields{
+				finderByUUID: func() FinderByUUID {
+					m := new(FinderByUUIDMock)
+					m.On("findByUUID", "61981e52-e1ca-449e-b79f-01d5906b3435").Return(nil, nil)
+					return m
+				}(),
+			},
+			expStatus: http.StatusBadRequest,
+			path:      "/api/v2/product?id=61981e52-e1ca-449e-b79f-01d5906b3435",
+			expBody:   `{"error":"Product is not found"}`,
+		},
+		{
+			name: "v2: Repository returns error, returns 500",
+			fields: fields{
+				finderByUUID: func() FinderByUUID {
+					m := new(FinderByUUIDMock)
+					m.On("findByUUID", "61981e52-e1ca-449e-b79f-01d5906b3435").Return(nil, errors.New("any error"))
+					return m
+				}(),
+			},
+			expStatus: http.StatusInternalServerError,
+			path:      "/api/v2/product?id=61981e52-e1ca-449e-b79f-01d5906b3435",
+			expBody:   `{"error":"Fail to query product by uuid"}`,
+		},
+
+		{
+			name:      "v1: Returns 400, no id passed",
+			expStatus: http.StatusBadRequest,
+			path:      "/api/v1/product",
+			expBody:   `{"error":"Key: 'UUID' Error:Field validation for 'UUID' failed on the 'required' tag"}`,
+		},
+		{
+			name:      "v2: Returns 400, no id passed",
+			expStatus: http.StatusBadRequest,
+			path:      "/api/v2/product",
+			expBody:   `{"error":"Key: 'UUID' Error:Field validation for 'UUID' failed on the 'required' tag"}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pc := NewController(
+				tt.fields.deleter,
+				tt.fields.updater,
+				tt.fields.inserter,
+				tt.fields.finderByUUID,
+				tt.fields.finder,
+				tt.fields.sellerRepository,
+				tt.fields.emailProvider,
+				tt.fields.smsProvider,
+			)
+			r := gin.Default()
+			r.Use(middleware.APIVersionResolver)
+			r.DELETE("/api/v1/product", pc.Delete)
+			r.DELETE("/api/v2/product", pc.Delete)
+
+			t.Run(tt.name, func(t *testing.T) {
+				w := httptest.NewRecorder()
+
+				req, err := http.NewRequest(http.MethodDelete, tt.path, nil)
+				assert.NoError(t, err)
+
+				r.ServeHTTP(w, req)
+
+				assert.Equal(t, tt.expStatus, w.Code)
+				assert.Equal(t, tt.expBody, w.Body.String())
+			})
+
+		})
+	}
+}
