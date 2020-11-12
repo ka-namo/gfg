@@ -50,7 +50,7 @@ func CreateAPIEngine(db *sql.DB, cfg config.ENVConfig) (*gin.Engine, error) {
 	v1.POST("product", productController.Post)
 	v1.PUT("product", productController.Put)
 	v1.DELETE("product", productController.Delete)
-	sellerController := seller.NewController(sellerRepository)
+	sellerController := seller.NewController(sellerRepository, sellerRepository)
 	v1.GET("sellers", sellerController.List)
 
 	// The decision of having same Controller and having different view as per
