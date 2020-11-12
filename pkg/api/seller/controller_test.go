@@ -200,10 +200,10 @@ func Test_controller_Top10(t *testing.T) {
 	}
 	for _, tt := range tests {
 
-		pc := NewController(tt.fields.finder, tt.fields.topFinder)
+		sc := NewController(tt.fields.finder, tt.fields.topFinder)
 		r := gin.Default()
 
-		r.GET("/api/v2/sellers/top10", pc.Top10)
+		r.GET("/api/v2/sellers/top10", sc.Top10)
 
 		t.Run(tt.name, func(t *testing.T) {
 			w := httptest.NewRecorder()

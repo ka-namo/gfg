@@ -33,7 +33,7 @@ func hydrateProductsToV2(c *gin.Context, products interface{}) interface{} {
 				Brand: p.Brand,
 				Stock: p.Stock,
 				Seller: seller{
-					UUID: p.UUID,
+					UUID: p.SellerUUID,
 					Links: links{
 						self{
 							HRef: fmt.Sprintf("%s/%s/%s", c.Request.Host, "sellers", p.SellerUUID),
@@ -50,7 +50,7 @@ func hydrateProductsToV2(c *gin.Context, products interface{}) interface{} {
 			Brand: v.Brand,
 			Stock: v.Stock,
 			Seller: seller{
-				UUID: v.UUID,
+				UUID: v.SellerUUID,
 				Links: links{
 					self{
 						HRef: fmt.Sprintf("%s/%s/%s", c.Request.Host, "sellers", v.SellerUUID),

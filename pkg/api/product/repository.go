@@ -2,6 +2,8 @@ package product
 
 import (
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 func NewRepository(db *sql.DB) *repository {
@@ -24,19 +26,23 @@ func (r *repository) delete(product *product) error {
 	return nil
 }
 
-func (r *repository) insert(product *product) error {
+// NOTE - as uuid is created in repository now, contract has to be chanegd to let controller
+// know the created product with UUID.
+func (r *repository) insert(product *product) (*product, error) {
+	product.UUID = uuid.New().String()
+
 	rows, err := r.db.Query(
 		"INSERT INTO product (id_product, name, brand, stock, fk_seller, uuid) VALUES(?,?,?,?,(SELECT id_seller FROM seller WHERE uuid = ?),?)",
 		product.ProductID, product.Name, product.Brand, product.Stock, product.SellerUUID, product.UUID,
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer rows.Close()
 
-	return nil
+	return product, nil
 }
 
 func (r *repository) update(product *product) error {
@@ -56,10 +62,10 @@ func (r *repository) update(product *product) error {
 
 func (r *repository) list(offset int, limit int) ([]*product, error) {
 	rows, err := r.db.Query(
-		"SELECT p.id_product, p.name, p.brand, p.stock, s.uuid, p.uuid FROM product p " +
+		"SELECT p.id_product, p.name, p.brand, p.stock, s.uuid, p.uuid FROM product p "+
 			"INNER JOIN seller s ON(s.id_seller = p.fk_seller) LIMIT ? OFFSET ?",
-			limit, offset,
-		)
+		limit, offset,
+	)
 
 	if err != nil {
 		return nil, err
@@ -81,14 +87,15 @@ func (r *repository) list(offset int, limit int) ([]*product, error) {
 		products = append(products, product)
 	}
 
-	return products, nil}
+	return products, nil
+}
 
 func (r *repository) findByUUID(uuid string) (*product, error) {
 	rows, err := r.db.Query(
-		"SELECT p.id_product, p.name, p.brand, p.stock, s.uuid, p.uuid FROM product p " +
+		"SELECT p.id_product, p.name, p.brand, p.stock, s.uuid, p.uuid FROM product p "+
 			"INNER JOIN seller s ON(s.id_seller = p.fk_seller) WHERE p.uuid = ?",
-			uuid,
-		)
+		uuid,
+	)
 
 	if err != nil {
 		return nil, err

@@ -6,7 +6,6 @@ import (
 	sellerAPI "coding-challenge-go/pkg/api/seller"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -33,7 +32,7 @@ type Updater interface {
 }
 
 type Inserter interface {
-	insert(product *product) error
+	insert(product *product) (*product, error)
 }
 
 type Deleter interface {
@@ -157,14 +156,15 @@ func (pc *controller) Post(c *gin.Context) {
 	}
 
 	product := &product{
-		UUID:       uuid.New().String(),
+		// NOTE - removing UUID generation from controller, as it is a responsibility of
+		// repository, and will make the controller also testable.
 		Name:       request.Name,
 		Brand:      request.Brand,
 		Stock:      request.Stock,
 		SellerUUID: seller.UUID,
 	}
 
-	err = pc.inserter.insert(product)
+	product, err = pc.inserter.insert(product)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to insert product")
