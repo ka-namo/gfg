@@ -2,6 +2,7 @@ package product
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -85,6 +86,10 @@ func (r *repository) list(offset int, limit int) ([]*product, error) {
 		}
 
 		products = append(products, product)
+	}
+
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("product.Repository.list: failed to read sql.Rows: %w", rows.Err())
 	}
 
 	return products, nil

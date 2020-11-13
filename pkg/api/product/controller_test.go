@@ -256,6 +256,19 @@ func Test_controller_List(t *testing.T) {
 			expBody:   `[{"uuid":"61981e52-e1ca-449e-b79f-01d5906b3435","name":"shoes","brand":"nike","stock":10,"seller_uuid":"a223850e-d8ab-430a-9a1a-28628cfd52b0"},{"uuid":"36345687-e998-4359-a2ed-a9703fe39b5f","name":"socks","brand":"adidas","stock":15,"seller_uuid":"a223850e-d8ab-430a-9a1a-28628cfd52b0"}]`,
 		},
 		{
+			name: "v1: Returns 500, when negative 'page' is sent",
+			fields: fields{
+				finder: func() ManyFinder {
+					m := new(ManyFinderMock)
+					m.On("list", -20, 10).Return(nil, errors.New("any error"))
+					return m
+				}(),
+			},
+			expStatus: http.StatusInternalServerError,
+			path:      "/api/v1/products?page=-1",
+			expBody:   `{"error":"Fail to query product list"}`,
+		},
+		{
 			name: "v1: Returns 500",
 			fields: fields{
 				finder: func() ManyFinder {
@@ -386,6 +399,19 @@ func Test_controller_Get(t *testing.T) {
 			expStatus: http.StatusBadRequest,
 			path:      "/api/v1/product",
 			expBody:   `{"error":"Key: 'UUID' Error:Field validation for 'UUID' failed on the 'required' tag"}`,
+		},
+		{
+			name: "v1: Returns 500",
+			fields: fields{
+				finderByUUID: func() FinderByUUID {
+					m := new(FinderByUUIDMock)
+					m.On("findByUUID", "somethingwrong").Return(nil, errors.New("any error"))
+					return m
+				}(),
+			},
+			expStatus: http.StatusInternalServerError,
+			path:      "/api/v1/product?id=somethingwrong",
+			expBody:   `{"error":"Fail to query product by uuid"}`,
 		},
 	}
 	for _, tt := range tests {
