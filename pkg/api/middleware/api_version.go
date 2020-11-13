@@ -10,7 +10,7 @@ import (
 // APIVersionResolver is a middleware which resolves the api version the request
 // is coming for.
 //
-// it puts the version in context which can be accessed by next handlers.
+// It puts the version in context which can be accessed by next handlers.
 func APIVersionResolver(c *gin.Context) {
 	pathComponents := strings.Split(c.FullPath(), "/")
 

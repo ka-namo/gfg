@@ -7,14 +7,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// NewRepository builds a new DB repo for Seller.
 func NewRepository(db *sql.DB) *Repository {
 	return &Repository{db: db}
 }
 
+// Repository is DB repo.
 type Repository struct {
 	db *sql.DB
 }
 
+// FindByUUID is the DB implementation for the product.SellerFinder.
 func (r *Repository) FindByUUID(uuid string) (*Seller, error) {
 	rows, err := r.db.Query("SELECT id_seller, name, email, phone, uuid FROM seller WHERE uuid = ?", uuid)
 
@@ -39,6 +42,7 @@ func (r *Repository) FindByUUID(uuid string) (*Seller, error) {
 	return seller, nil
 }
 
+// list is the DB implementation for the ManyFinder.
 func (r *Repository) list() ([]*Seller, error) {
 	rows, err := r.db.Query("SELECT id_seller, name, email, phone, uuid FROM seller")
 
@@ -68,7 +72,9 @@ func (r *Repository) list() ([]*Seller, error) {
 	return sellers, nil
 }
 
-// top returns the Sellers who are selling products ordered by count of products
+// top is the DB implementation of TopSellerFinder.
+//
+// Returns the Sellers who are selling products ordered by count of products
 // they have for sale from the largest to the smallest number limited by given limit.
 func (r *Repository) top(limit int) ([]*Seller, error) {
 	query := "SELECT id_seller, name, email, phone, uuid FROM seller" +

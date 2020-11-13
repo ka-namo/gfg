@@ -8,19 +8,23 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// ManyFinder is a Finder for many Sellers.
 type ManyFinder interface {
 	list() ([]*Seller, error)
 }
 
+// TopSellerFinder is a Finder for top Sellers of products.
 type TopSellerFinder interface {
 	top(limit int) ([]*Seller, error)
 }
 
+// controller is HTTP controller handles HTTP requests for Seller APIs.
 type controller struct {
 	finder    ManyFinder
 	topFinder TopSellerFinder
 }
 
+// NewController builds the Seller controller.
 func NewController(
 	finder ManyFinder,
 	topFinder TopSellerFinder,
@@ -30,6 +34,7 @@ func NewController(
 	}
 }
 
+// List returns many sellers.
 func (pc *controller) List(c *gin.Context) {
 	sellers, err := pc.finder.list()
 

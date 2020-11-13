@@ -10,35 +10,43 @@ import (
 )
 
 const (
+	// ListPageView is the default max size of the page for Products.
 	ListPageSize = 10
 	versionV1    = "v1"
 	versionV2    = "v2"
 )
 
+// SellerFinder is a Finder for Seller.
 type SellerFinder interface {
 	FindByUUID(uuid string) (*sellerAPI.Seller, error)
 }
 
+// FinderByUUID is a Finder for Product by UUID.
 type FinderByUUID interface {
 	findByUUID(uuid string) (*product, error)
 }
 
+// ManyFinder is a Finder for many Product with paging.
 type ManyFinder interface {
 	list(offset int, limit int) ([]*product, error)
 }
 
+// Updater is a update which updates the Product to repository.
 type Updater interface {
 	update(product *product) error
 }
 
+// Inserter inserts the Product to underlying repository.
 type Inserter interface {
 	insert(product *product) (*product, error)
 }
 
+// Deletes the product from repository
 type Deleter interface {
 	delete(product *product) error
 }
 
+// controller is HTTP controller handles HTTP requests for Product APIs.
 type controller struct {
 	deleter          Deleter
 	updater          Updater
@@ -50,6 +58,7 @@ type controller struct {
 	smsProvider      StockChangedNotifier
 }
 
+// NewController builds the Product controller.
 func NewController(
 	deleter Deleter,
 	updater Updater,
@@ -72,6 +81,7 @@ func NewController(
 	}
 }
 
+// List returns many products as per page and number of results.
 func (pc *controller) List(c *gin.Context) {
 	request := &struct {
 		Page int `form:"page,default=1"`
@@ -100,6 +110,7 @@ func (pc *controller) List(c *gin.Context) {
 	c.Data(http.StatusOK, "application/json; charset=utf-8", productsJson)
 }
 
+// Get returns the Product by id.
 func (pc *controller) Get(c *gin.Context) {
 	request := &struct {
 		UUID string `form:"id" binding:"required"`
@@ -129,6 +140,7 @@ func (pc *controller) Get(c *gin.Context) {
 	c.Data(http.StatusOK, "application/json; charset=utf-8", jsonData)
 }
 
+// Post creates and returns the Product.
 func (pc *controller) Post(c *gin.Context) {
 	request := &struct {
 		Name   string `form:"name"`
@@ -183,6 +195,7 @@ func (pc *controller) Post(c *gin.Context) {
 	c.Data(http.StatusOK, "application/json; charset=utf-8", jsonData)
 }
 
+// Put updates the product.
 func (pc *controller) Put(c *gin.Context) {
 	queryRequest := &struct {
 		UUID string `form:"id" binding:"required"`
@@ -255,6 +268,7 @@ func (pc *controller) Put(c *gin.Context) {
 	c.Data(http.StatusOK, "application/json; charset=utf-8", jsonData)
 }
 
+// Delete deletes the product.
 func (pc *controller) Delete(c *gin.Context) {
 	request := &struct {
 		UUID string `form:"id" binding:"required"`
