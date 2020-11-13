@@ -248,6 +248,8 @@ func (pc *controller) Put(c *gin.Context) {
 			return
 		}
 
+		// Note - The StockChanged signature seems to me wrong, it was expecting product name and it was sending
+		// email, so i changed it to incorporate the logging the correct information.
 		if pc.emailProvider != nil {
 			pc.emailProvider.StockChanged(seller.UUID, seller.Email, oldStock, product.Stock, product.Name)
 		}
