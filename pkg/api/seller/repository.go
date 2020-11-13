@@ -2,6 +2,7 @@ package seller
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/rs/zerolog/log"
 )
@@ -60,6 +61,10 @@ func (r *Repository) list() ([]*Seller, error) {
 		sellers = append(sellers, seller)
 	}
 
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("seller.Repository.list: failed to read sql.Rows %w", rows.Err())
+	}
+
 	return sellers, nil
 }
 
@@ -77,7 +82,7 @@ func (r *Repository) top(limit int) ([]*Seller, error) {
 
 	defer func() {
 		if err := rows.Close(); err != nil {
-			log.Log().Err(err).Msg("sellerRepository: failed to close the sql.Rows")
+			log.Log().Err(err).Msg("seller.Repository: failed to close the sql.Rows")
 		}
 	}()
 
@@ -92,6 +97,10 @@ func (r *Repository) top(limit int) ([]*Seller, error) {
 		}
 
 		sellers = append(sellers, seller)
+	}
+
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("seller.Repository.top: failed to read sql.Rows %w", rows.Err())
 	}
 
 	return sellers, nil
