@@ -13,7 +13,7 @@ type ManyFinder interface {
 	list() ([]*Seller, error)
 }
 
-// TopSellerFinder is a Finder for top Sellers of products.
+// TopSellerFinder is a Finder for top Sellers of Products.
 type TopSellerFinder interface {
 	top(limit int) ([]*Seller, error)
 }

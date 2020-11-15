@@ -109,7 +109,7 @@ func Test_controller_List(t *testing.T) {
 			expBody:   `[{"uuid":"fd1574eb-920b-4677-b7e0-4768a5e504c0","name":"shawn","email":"s@example.com","phone":"123-23-23"},{"uuid":"c943dc0a-98bb-47b4-9d1d-056b95d3f064","name":"peter","email":"p@example.com","phone":"456-23-23"}]`,
 		},
 		{
-			name: "v1: Returns 500",
+			name: "v1: Returns 500, when repository returns an error",
 			fields: fields{
 				finder: func() ManyFinder {
 					m := new(ManyFinderMock)
@@ -185,7 +185,7 @@ func Test_controller_Top10(t *testing.T) {
 			expBody:   `[{"uuid":"fd1574eb-920b-4677-b7e0-4768a5e504c0","name":"shawn","email":"s@example.com","phone":"123-23-23"},{"uuid":"c943dc0a-98bb-47b4-9d1d-056b95d3f064","name":"peter","email":"p@example.com","phone":"456-23-23"}]`,
 		},
 		{
-			name: "v2: Returns 500",
+			name: "v2: Returns 500, when repository returns error",
 			fields: fields{
 				topFinder: func() TopSellerFinder {
 					m := new(TopSellerFinderMock)

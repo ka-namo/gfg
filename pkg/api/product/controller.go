@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	// ListPageView is the default max size of the page for Products.
-	ListPageSize = 10
+	listPageSize = 10
 	versionV1    = "v1"
 	versionV2    = "v2"
 )
@@ -26,12 +25,12 @@ type FinderByUUID interface {
 	findByUUID(uuid string) (*product, error)
 }
 
-// ManyFinder is a Finder for many Product with paging.
+// ManyFinder is a Finder for many Products with paging.
 type ManyFinder interface {
 	list(offset int, limit int) ([]*product, error)
 }
 
-// Updater is a update which updates the Product to repository.
+// Updater is a updater which updates the Product to repository.
 type Updater interface {
 	update(product *product) error
 }
@@ -41,12 +40,12 @@ type Inserter interface {
 	insert(product *product) (*product, error)
 }
 
-// Deletes the product from repository
+// Deletes the Product from underlying repository
 type Deleter interface {
 	delete(product *product) error
 }
 
-// controller is HTTP controller handles HTTP requests for Product APIs.
+// controller is an HTTP controller handles HTTP requests for Product APIs.
 type controller struct {
 	deleter          Deleter
 	updater          Updater
@@ -92,7 +91,7 @@ func (pc *controller) List(c *gin.Context) {
 		return
 	}
 
-	products, err := pc.finder.list((request.Page-1)*ListPageSize, ListPageSize)
+	products, err := pc.finder.list((request.Page-1)*listPageSize, listPageSize)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Fail to query product list")
@@ -131,7 +130,6 @@ func (pc *controller) Get(c *gin.Context) {
 
 	jsonData, err := marshalJSON(c, product)
 	if err != nil {
-		log.Print(err)
 		log.Error().Err(err).Msg("Fail to marshal product")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fail to marshal product"})
 		return
@@ -195,7 +193,7 @@ func (pc *controller) Post(c *gin.Context) {
 	c.Data(http.StatusOK, "application/json; charset=utf-8", jsonData)
 }
 
-// Put updates the product.
+// Put updates the Product.
 func (pc *controller) Put(c *gin.Context) {
 	queryRequest := &struct {
 		UUID string `form:"id" binding:"required"`

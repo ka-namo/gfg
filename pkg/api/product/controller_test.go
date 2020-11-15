@@ -269,7 +269,7 @@ func Test_controller_List(t *testing.T) {
 			expBody:   `{"error":"Fail to query product list"}`,
 		},
 		{
-			name: "v1: Returns 500",
+			name: "v1: Returns 500, when repository sends an error",
 			fields: fields{
 				finder: func() ManyFinder {
 					m := new(ManyFinderMock)
@@ -389,19 +389,19 @@ func Test_controller_Get(t *testing.T) {
 			expBody:   `{"uuid":"61981e52-e1ca-449e-b79f-01d5906b3435","name":"shoes","brand":"nike","stock":10,"seller_uuid":"a223850e-d8ab-430a-9a1a-28628cfd52b0"}`,
 		},
 		{
-			name:      "v2: Returns 400",
+			name:      "v2: Returns 400, when UUID is not sent",
 			expStatus: http.StatusBadRequest,
 			path:      "/api/v2/product",
 			expBody:   `{"error":"Key: 'UUID' Error:Field validation for 'UUID' failed on the 'required' tag"}`,
 		},
 		{
-			name:      "v1: Returns 400",
+			name:      "v1: Returns 400, when UUID is not sent",
 			expStatus: http.StatusBadRequest,
 			path:      "/api/v1/product",
 			expBody:   `{"error":"Key: 'UUID' Error:Field validation for 'UUID' failed on the 'required' tag"}`,
 		},
 		{
-			name: "v1: Returns 500",
+			name: "v1: Returns 500, when repository returns any error",
 			fields: fields{
 				finderByUUID: func() FinderByUUID {
 					m := new(FinderByUUIDMock)
@@ -545,14 +545,14 @@ func Test_controller_Insert(t *testing.T) {
 			expBody:   `{"uuid":"61981e52-e1ca-449e-b79f-01d5906b3435","name":"shoes","brand":"nike","stock":10,"seller":{"uuid":"a223850e-d8ab-430a-9a1a-28628cfd52b0","_links":{"self":{"href":"/sellers/a223850e-d8ab-430a-9a1a-28628cfd52b0"}}}}`,
 		},
 		{
-			name:      "v1: Product, returns 400",
+			name:      "v1: Product, returns 400 with empty body",
 			body:      "",
 			expStatus: http.StatusBadRequest,
 			path:      "/api/v1/product",
 			expBody:   `{"error":"EOF"}`,
 		},
 		{
-			name:      "v2: Product, returns 400",
+			name:      "v2: Product, returns 400 with empty body",
 			body:      "",
 			expStatus: http.StatusBadRequest,
 			path:      "/api/v2/product",
