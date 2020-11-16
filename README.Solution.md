@@ -1,4 +1,4 @@
-##Solution for version 2 for Product and Seller APIs
+## Solution for version 2 for Product and Seller APIs
 
 ### Refactoring
 I have refactored the existing code, as it was using concrete dependencies and no abstraction.
